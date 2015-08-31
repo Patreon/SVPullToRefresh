@@ -26,6 +26,7 @@ typedef NS_ENUM(NSUInteger, SVPullToRefreshPosition) {
 
 @property (nonatomic, strong, readonly) SVPullToRefreshView *pullToRefreshView;
 @property (nonatomic, assign) BOOL showsPullToRefresh;
+@property (nonatomic, assign) CGFloat pullToRefreshViewVerticalOffset;
 
 @end
 
@@ -48,6 +49,7 @@ typedef NS_ENUM(NSUInteger, SVPullToRefreshState) {
 
 @property (nonatomic, readonly) SVPullToRefreshState state;
 @property (nonatomic, readonly) SVPullToRefreshPosition position;
+@property (nonatomic, readwrite) CGFloat originalTopInset;
 
 - (void)setTitle:(NSString *)title forState:(SVPullToRefreshState)state;
 - (void)setSubtitle:(NSString *)subtitle forState:(SVPullToRefreshState)state;

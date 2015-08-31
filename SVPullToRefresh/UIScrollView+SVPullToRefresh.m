@@ -39,7 +39,6 @@ static CGFloat const SVPullToRefreshViewHeight = 60;
 @property (nonatomic, strong) NSMutableArray *viewForState;
 
 @property (nonatomic, weak) UIScrollView *scrollView;
-@property (nonatomic, readwrite) CGFloat originalTopInset;
 @property (nonatomic, readwrite) CGFloat originalBottomInset;
 
 @property (nonatomic, assign) BOOL wasTriggeredByUser;
@@ -60,10 +59,11 @@ static CGFloat const SVPullToRefreshViewHeight = 60;
 #import <objc/runtime.h>
 
 static char UIScrollViewPullToRefreshView;
+static NSString *PullToRefreshViewVerticalOffsetKey = @"PullToRefreshViewVerticalOffsetKey";
 
 @implementation UIScrollView (SVPullToRefresh)
 
-@dynamic pullToRefreshView, showsPullToRefresh;
+@dynamic pullToRefreshView, showsPullToRefresh, pullToRefreshViewVerticalOffset;
 
 - (void)addPullToRefreshWithActionHandler:(void (^)(void))actionHandler position:(SVPullToRefreshPosition)position {
     
@@ -79,6 +79,7 @@ static char UIScrollViewPullToRefreshView;
             default:
                 return;
         }
+        yOrigin += self.pullToRefreshViewVerticalOffset;
         SVPullToRefreshView *view = [[SVPullToRefreshView alloc] initWithFrame:CGRectMake(0, yOrigin, self.bounds.size.width, SVPullToRefreshViewHeight)];
         view.pullToRefreshActionHandler = actionHandler;
         view.scrollView = self;
@@ -142,7 +143,8 @@ static char UIScrollViewPullToRefreshView;
                     yOrigin = self.contentSize.height;
                     break;
             }
-            
+            yOrigin += self.pullToRefreshViewVerticalOffset;
+
             self.pullToRefreshView.frame = CGRectMake(0, yOrigin, self.bounds.size.width, SVPullToRefreshViewHeight);
         }
     }
@@ -150,6 +152,19 @@ static char UIScrollViewPullToRefreshView;
 
 - (BOOL)showsPullToRefresh {
     return !self.pullToRefreshView.hidden;
+}
+
+- (void)setPullToRefreshViewVerticalOffset:(CGFloat)pullToRefreshViewVerticalOffset {
+  [self willChangeValueForKey:@"pullToRefreshViewVerticalOffset"];
+  objc_setAssociatedObject(self, &PullToRefreshViewVerticalOffsetKey,
+                           @(pullToRefreshViewVerticalOffset),
+                           OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+  [self didChangeValueForKey:@"pullToRefreshViewVerticalOffset"];
+}
+
+- (CGFloat)pullToRefreshViewVerticalOffset {
+  NSNumber *boxedOffset = objc_getAssociatedObject(self, &PullToRefreshViewVerticalOffsetKey);
+  return (CGFloat)[boxedOffset doubleValue];
 }
 
 @end
@@ -383,6 +398,7 @@ static char UIScrollViewPullToRefreshView;
                 yOrigin = MAX(self.scrollView.contentSize.height, self.scrollView.bounds.size.height);
                 break;
         }
+        yOrigin += self.scrollView.pullToRefreshViewVerticalOffset;
         self.frame = CGRectMake(0, yOrigin, self.bounds.size.width, SVPullToRefreshViewHeight);
     }
     else if([keyPath isEqualToString:@"frame"])
@@ -395,7 +411,7 @@ static char UIScrollViewPullToRefreshView;
         CGFloat scrollOffsetThreshold = 0;
         switch (self.position) {
             case SVPullToRefreshPositionTop:
-                scrollOffsetThreshold = self.frame.origin.y - self.originalTopInset;
+                scrollOffsetThreshold = self.frame.origin.y;
                 break;
             case SVPullToRefreshPositionBottom:
                 scrollOffsetThreshold = MAX(self.scrollView.contentSize.height - self.scrollView.bounds.size.height, 0.0f) + self.bounds.size.height + self.originalBottomInset;
