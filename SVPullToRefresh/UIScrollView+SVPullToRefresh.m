@@ -387,8 +387,6 @@ static NSString *PullToRefreshViewVerticalOffsetKey = @"PullToRefreshViewVertica
     if([keyPath isEqualToString:@"contentOffset"])
         [self scrollViewDidScroll:[[change valueForKey:NSKeyValueChangeNewKey] CGPointValue]];
     else if([keyPath isEqualToString:@"contentSize"]) {
-        [self layoutSubviews];
-        
         CGFloat yOrigin;
         switch (self.position) {
             case SVPullToRefreshPositionTop:
